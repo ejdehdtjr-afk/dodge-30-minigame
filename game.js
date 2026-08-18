@@ -2,7 +2,7 @@
 
 (() => {
   const GAME_DURATION = 30;
-  const SPAWN_INTERVAL = 0.72;
+  const SPAWN_INTERVAL = 0.6;
   const PLAYER_SPEED = 440;
   const STORAGE_KEY = "dodge30.preferences.v1";
 
@@ -165,7 +165,7 @@
       x: Math.random() * maxX,
       y: -size,
       size,
-      speed: 185 + Math.random() * 105 + score * 1.2,
+      speed: 215 + Math.random() * 115 + score * 1.2,
       rotation: Math.random() * 360,
     };
     obstacles.push(obstacle);
@@ -373,3 +373,4 @@
   syncPreferences();
   resetRound();
 })();
+
