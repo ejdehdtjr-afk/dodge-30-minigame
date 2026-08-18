@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#12162b" />
+    <meta
+      name="description"
+      content="30초 동안 떨어지는 장애물을 피하는 반응형 브라우저 미니게임"
+    />
+    <title>DODGE 30 — 30초 피하기 게임</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="game.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">BROWSER MINI GAME</p>
+          <h1>DODGE <span>30</span></h1>
+          <p class="tagline">네온 우주선을 움직여 30초 동안 운석을 피하세요.</p>
+        </div>
+        <div class="hero-actions" aria-label="게임 환경 설정">
+          <button id="muteButton" class="utility-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">🔊</span> 소리 켜짐
+          </button>
+          <button id="motionButton" class="utility-button" type="button" aria-pressed="false">
+            <span aria-hidden="true">✨</span> 움직임 기본
+          </button>
+        </div>
+      </header>
+
+      <section class="instruction-card" aria-labelledby="how-to-play">
+        <div>
+          <p class="section-label" id="how-to-play">게임 규칙</p>
+          <p><strong>목표</strong> 운석에 부딪히지 않고 30초 생존</p>
+        </div>
+        <div>
+          <p class="section-label">조작 방법</p>
+          <p><kbd>←</kbd> <kbd>→</kbd> 또는 <kbd>A</kbd> <kbd>D</kbd> · <kbd>P</kbd> 일시정지</p>
+        </div>
+      </section>
+
+      <section class="scoreboard" aria-label="현재 게임 정보">
+        <div class="metric">
+          <span>남은 시간</span>
+          <strong><span id="timeValue">30.0</span><small>초</small></strong>
+        </div>
+        <div class="metric">
+          <span>피한 운석</span>
+          <strong id="scoreValue">0</strong>
+        </div>
+        <div class="metric">
+          <span>최고 기록</span>
+          <strong id="bestValue">0</strong>
+        </div>
+        <div class="status-panel" id="statusPanel" data-state="ready">
+          <span>현재 상태</span>
+          <strong id="statusValue" role="status" aria-live="polite">시작 전</strong>
+        </div>
+      </section>
+
+      <section class="game-card" aria-label="게임 영역">
+        <div id="arena" class="arena" tabindex="0" aria-describedby="arenaHelp">
+          <div class="stars" aria-hidden="true"></div>
+          <div id="player" class="player" aria-label="플레이어 우주선">
+            <span class="ship-body" aria-hidden="true"></span>
+          </div>
+          <div id="overlay" class="overlay">
+            <p class="overlay-kicker" id="overlayKicker">MISSION READY</p>
+            <h2 id="overlayTitle">30초, 버틸 수 있나요?</h2>
+            <p id="overlayMessage">시작 버튼을 누른 뒤 좌우로 움직여 운석을 피하세요.</p>
+            <button id="overlayButton" class="primary-button" type="button">게임 시작</button>
+          </div>
+        </div>
+        <p class="sr-only" id="arenaHelp">왼쪽과 오른쪽 방향키 또는 A와 D 키로 우주선을 움직입니다.</p>
+
+        <div class="touch-controls" aria-label="모바일 이동 조작">
+          <button id="leftButton" class="move-button" type="button" aria-label="왼쪽으로 이동">←</button>
+          <button id="rightButton" class="move-button" type="button" aria-label="오른쪽으로 이동">→</button>
+        </div>
+      </section>
+
+      <section class="control-bar" aria-label="게임 제어">
+        <button id="startButton" class="primary-button" type="button">게임 시작</button>
+        <button id="pauseButton" class="secondary-button" type="button" disabled>일시정지</button>
+        <button id="restartButton" class="secondary-button" type="button">다시 시작</button>
+      </section>
+
+      <p class="focus-note" id="focusNote">창을 벗어나면 게임이 자동으로 일시정지됩니다.</p>
+    </main>
+
+    <noscript>이 게임을 실행하려면 브라우저에서 JavaScript를 켜주세요.</noscript>
+  </body>
+</html>
