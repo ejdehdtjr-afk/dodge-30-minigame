@@ -166,6 +166,9 @@
       y: -size,
       size,
       speed: 215 + Math.random() * 115 + score * 1.2,
+      drift: (Math.random() - 0.5) * 28,
+      steering: 42 + Math.random() * 24,
+      maxDrift: 74 + Math.random() * 20,
       rotation: Math.random() * 360,
     };
     obstacles.push(obstacle);
@@ -239,8 +242,16 @@
 
   function updateObstacles(delta) {
     const arenaHeight = elements.arena.clientHeight;
+    const arenaWidth = elements.arena.clientWidth;
+    const playerCenterX = (playerX / 100) * arenaWidth;
     const next = [];
     for (const obstacle of obstacles) {
+      const meteorCenterX = obstacle.x + obstacle.size / 2;
+      const steerDirection = Math.sign(playerCenterX - meteorCenterX);
+      obstacle.drift += steerDirection * obstacle.steering * delta;
+      obstacle.drift = Math.min(obstacle.maxDrift, Math.max(-obstacle.maxDrift, obstacle.drift));
+      obstacle.x += obstacle.drift * delta;
+      obstacle.x = Math.min(arenaWidth - obstacle.size, Math.max(0, obstacle.x));
       obstacle.y += obstacle.speed * delta;
       obstacle.rotation += 80 * delta;
       obstacle.element.style.transform = `translate(${obstacle.x}px, ${obstacle.y}px) rotate(${obstacle.rotation}deg)`;
