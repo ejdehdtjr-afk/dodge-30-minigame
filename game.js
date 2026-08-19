@@ -491,14 +491,14 @@
   }
 
   function handleKeyDown(event) {
-    const gameKeys = ["ArrowLeft", "ArrowRight", "KeyA", "KeyD", "KeyP", "Space"];
+    const gameKeys = ["ArrowLeft", "ArrowRight", "KeyA", "KeyD", "KeyP", "Escape", "Space"];
     if (gameKeys.includes(event.code)) event.preventDefault();
     if (["ArrowLeft", "ArrowRight", "KeyA", "KeyD"].includes(event.code)) {
       pressed.add(event.code);
       if (!event.repeat) nudgePlayer(["ArrowLeft", "KeyA"].includes(event.code) ? -1 : 1);
     }
     if (event.repeat) return;
-    if (event.code === "KeyP" && (state === "running" || state === "paused")) togglePause();
+    if (["KeyP", "Escape"].includes(event.code) && (state === "running" || state === "paused")) togglePause();
     if (event.code === "Space" && ["ready", "won", "lost"].includes(state)) startGame();
   }
 
