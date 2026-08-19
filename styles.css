@@ -125,9 +125,11 @@ button:disabled {
 }
 
 .instruction-card,
+.setup-card,
 .scoreboard,
 .game-card,
-.control-bar {
+.control-bar,
+.ranking-card {
   border: 1px solid var(--line);
   background: var(--panel);
   box-shadow: var(--shadow);
@@ -150,6 +152,90 @@ button:disabled {
 
 .instruction-card strong {
   color: var(--text);
+}
+
+.setup-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.pilot-config,
+.difficulty-config {
+  display: grid;
+  gap: 11px;
+  padding: 17px 20px;
+}
+
+.pilot-config {
+  border-right: 1px solid var(--line);
+}
+
+.setup-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.setup-title strong {
+  margin-left: 5px;
+  color: var(--cyan);
+  font-size: 1.08rem;
+}
+
+.pilot-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.pilot-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  outline: none;
+  color: var(--text);
+  background: rgba(4, 7, 17, 0.58);
+  font: inherit;
+}
+
+.pilot-form input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(98, 244, 255, 0.1);
+}
+
+.setup-hint {
+  min-height: 1.25em;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.difficulty-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.difficulty-button {
+  min-width: 0;
+  padding: 0 10px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.difficulty-button.is-active {
+  border-color: rgba(98, 244, 255, 0.75);
+  color: #071219;
+  background: linear-gradient(135deg, var(--cyan), #a5fff7);
+  box-shadow: 0 0 18px rgba(98, 244, 255, 0.18);
 }
 
 kbd {
@@ -563,6 +649,103 @@ kbd {
   text-align: center;
 }
 
+.ranking-card {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 18px;
+}
+
+.ranking-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ranking-header h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+  letter-spacing: -0.035em;
+}
+
+.ranking-header > span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.ranking-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ranking-entry {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid rgba(145, 157, 255, 0.13);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ranking-entry:first-child {
+  border-color: rgba(255, 209, 102, 0.35);
+  background: rgba(255, 209, 102, 0.07);
+}
+
+.rank-number {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.ranking-entry:first-child .rank-number {
+  color: var(--yellow);
+}
+
+.ranking-pilot {
+  min-width: 0;
+}
+
+.ranking-pilot strong,
+.ranking-pilot small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-pilot strong {
+  font-size: 0.92rem;
+}
+
+.ranking-pilot small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.ranking-points {
+  color: var(--cyan);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ranking-empty {
+  padding: 24px 12px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -625,6 +808,15 @@ body.reduce-motion *::after {
     gap: 16px;
   }
 
+  .setup-card {
+    grid-template-columns: 1fr;
+  }
+
+  .pilot-config {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
   .scoreboard {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -666,6 +858,16 @@ body.reduce-motion *::after {
   .control-bar .primary-button {
     grid-column: 1 / -1;
   }
+
+  .ranking-card {
+    padding: 16px 12px;
+  }
+
+  .ranking-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
 }
 
 @media (max-width: 410px) {
@@ -676,6 +878,16 @@ body.reduce-motion *::after {
 
   .utility-button {
     width: 100%;
+  }
+
+  .pilot-form {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-entry {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding-inline: 9px;
   }
 
   .instruction-card {

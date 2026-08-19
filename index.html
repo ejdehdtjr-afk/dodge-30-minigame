@@ -41,6 +41,34 @@
         </div>
       </section>
 
+      <section class="setup-card" aria-label="파일럿과 난이도 설정">
+        <div class="pilot-config">
+          <div>
+            <p class="section-label">PILOT PROFILE</p>
+            <p class="setup-title">현재 파일럿 <strong id="currentPilot">게스트</strong></p>
+          </div>
+          <form id="pilotForm" class="pilot-form">
+            <label class="sr-only" for="pilotName">파일럿 이름</label>
+            <input id="pilotName" name="pilotName" type="text" maxlength="12" autocomplete="off" placeholder="이름 입력 (최대 12자)" />
+            <button class="secondary-button" type="submit">생성·전환</button>
+          </form>
+          <p id="pilotSummary" class="setup-hint" role="status">게스트로 플레이 중 · 이름을 만들면 랭킹에 저장됩니다.</p>
+        </div>
+
+        <div class="difficulty-config">
+          <div>
+            <p class="section-label">DIFFICULTY</p>
+            <p class="setup-title">작전 난이도</p>
+          </div>
+          <div class="difficulty-buttons" role="group" aria-label="난이도 선택">
+            <button class="difficulty-button" type="button" data-difficulty="easy" aria-pressed="false">이지</button>
+            <button class="difficulty-button is-active" type="button" data-difficulty="normal" aria-pressed="true">노멀</button>
+            <button class="difficulty-button" type="button" data-difficulty="hard" aria-pressed="false">하드</button>
+          </div>
+          <p id="difficultyHint" class="setup-hint">노멀 · 현재 운석 속도와 유도 강도</p>
+        </div>
+      </section>
+
       <section class="scoreboard" aria-label="현재 게임 정보">
         <div class="metric">
           <span>남은 시간</span>
@@ -97,6 +125,19 @@
       </section>
 
       <p class="focus-note" id="focusNote">창을 벗어나면 게임이 자동으로 일시정지됩니다.</p>
+
+      <section class="ranking-card" aria-labelledby="rankingTitle">
+        <header class="ranking-header">
+          <div>
+            <p class="section-label">PILOT RECORDS</p>
+            <h2 id="rankingTitle">로컬 파일럿 랭킹</h2>
+          </div>
+          <span>이 브라우저 기준 · TOP 10</span>
+        </header>
+        <ol id="rankingList" class="ranking-list">
+          <li class="ranking-empty">아직 기록이 없습니다. 첫 작전을 시작하세요.</li>
+        </ol>
+      </section>
     </main>
 
     <noscript>이 게임을 실행하려면 브라우저에서 JavaScript를 켜주세요.</noscript>

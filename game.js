@@ -2,9 +2,47 @@
 
 (() => {
   const GAME_DURATION = 30;
-  const SPAWN_INTERVAL = 0.6;
   const PLAYER_SPEED = 440;
   const STORAGE_KEY = "dodge30.preferences.v1";
+  const RANKING_LIMIT = 10;
+  const DIFFICULTIES = {
+    easy: {
+      label: "이지",
+      hint: "운석이 적고 느리며 유도력이 약합니다.",
+      spawnInterval: 0.84,
+      minSpeed: 180,
+      speedVariance: 90,
+      steeringMin: 20,
+      steeringVariance: 14,
+      maxDriftMin: 48,
+      maxDriftVariance: 14,
+      pointMultiplier: 0.85,
+    },
+    normal: {
+      label: "노멀",
+      hint: "현재 운석 속도와 유도 강도입니다.",
+      spawnInterval: 0.6,
+      minSpeed: 215,
+      speedVariance: 115,
+      steeringMin: 42,
+      steeringVariance: 24,
+      maxDriftMin: 74,
+      maxDriftVariance: 20,
+      pointMultiplier: 1,
+    },
+    hard: {
+      label: "하드",
+      hint: "운석이 빠르고 자주 등장하며 강하게 추적합니다.",
+      spawnInterval: 0.44,
+      minSpeed: 260,
+      speedVariance: 135,
+      steeringMin: 68,
+      steeringVariance: 32,
+      maxDriftMin: 108,
+      maxDriftVariance: 26,
+      pointMultiplier: 1.3,
+    },
+  };
 
   const elements = {
     arena: document.querySelector("#arena"),
@@ -27,22 +65,74 @@
     left: document.querySelector("#leftButton"),
     right: document.querySelector("#rightButton"),
     focusNote: document.querySelector("#focusNote"),
+    pilotForm: document.querySelector("#pilotForm"),
+    pilotInput: document.querySelector("#pilotName"),
+    pilotSubmit: document.querySelector("#pilotForm button[type='submit']"),
+    currentPilot: document.querySelector("#currentPilot"),
+    pilotSummary: document.querySelector("#pilotSummary"),
+    difficultyButtons: [...document.querySelectorAll(".difficulty-button")],
+    difficultyHint: document.querySelector("#difficultyHint"),
+    rankingList: document.querySelector("#rankingList"),
   };
 
-  const defaults = { best: 0, muted: false, reducedMotion: false };
+  function createDefaults() {
+    return {
+      best: 0,
+      muted: false,
+      reducedMotion: false,
+      difficulty: "normal",
+      activePilot: "게스트",
+      pilots: [],
+      rankings: [],
+    };
+  }
+
+  function normalizePilotName(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").slice(0, 12);
+  }
 
   function loadPreferences() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (!parsed || typeof parsed !== "object") return { ...defaults };
+      if (!parsed || typeof parsed !== "object") return createDefaults();
+      const pilots = Array.isArray(parsed.pilots)
+        ? [...new Set(parsed.pilots.map(normalizePilotName).filter(Boolean))].slice(0, 20)
+        : [];
+      const rankings = Array.isArray(parsed.rankings)
+        ? parsed.rankings
+            .map((entry) => {
+              const pilot = normalizePilotName(entry?.pilot);
+              const points = Number(entry?.points);
+              const survived = Number(entry?.survived);
+              if (!pilot || !Number.isFinite(points) || !Number.isFinite(survived)) return null;
+              return {
+                pilot,
+                points: Math.max(0, Math.round(points)),
+                survived: Math.min(GAME_DURATION, Math.max(0, survived)),
+                dodged: Math.max(0, Math.round(Number(entry?.dodged) || 0)),
+                difficulty: DIFFICULTIES[entry?.difficulty] ? entry.difficulty : "normal",
+                result: entry?.result === "won" ? "won" : "lost",
+                playedAt: Number(entry?.playedAt) || 0,
+              };
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.points - a.points || b.survived - a.survived)
+            .slice(0, RANKING_LIMIT)
+        : [];
+      const activePilot = normalizePilotName(parsed.activePilot) || "게스트";
+      if (activePilot !== "게스트" && !pilots.includes(activePilot)) pilots.push(activePilot);
       return {
         best: Number.isInteger(parsed.best) && parsed.best >= 0 ? parsed.best : 0,
         muted: typeof parsed.muted === "boolean" ? parsed.muted : false,
         reducedMotion:
           typeof parsed.reducedMotion === "boolean" ? parsed.reducedMotion : false,
+        difficulty: DIFFICULTIES[parsed.difficulty] ? parsed.difficulty : "normal",
+        activePilot,
+        pilots,
+        rankings,
       };
     } catch {
-      return { ...defaults };
+      return createDefaults();
     }
   }
 
@@ -70,6 +160,59 @@
     state = nextState;
     elements.statusPanel.dataset.state = nextState;
     elements.status.textContent = text;
+    syncGameSetup();
+  }
+
+  function getDifficulty() {
+    return DIFFICULTIES[preferences.difficulty] || DIFFICULTIES.normal;
+  }
+
+  function syncGameSetup() {
+    const locked = state === "running" || state === "paused";
+    const difficulty = getDifficulty();
+    elements.currentPilot.textContent = preferences.activePilot;
+    elements.pilotInput.disabled = locked;
+    elements.pilotSubmit.disabled = locked;
+    elements.pilotSummary.textContent = preferences.activePilot === "게스트"
+      ? "게스트로 플레이 중 · 이름을 만들면 랭킹에 저장됩니다."
+      : `등록 파일럿 ${preferences.pilots.length}명 · ${preferences.activePilot} 기록 저장 중`;
+    for (const button of elements.difficultyButtons) {
+      const active = button.dataset.difficulty === preferences.difficulty;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+      button.disabled = locked;
+    }
+    elements.difficultyHint.textContent = `${difficulty.label} · ${difficulty.hint}`;
+  }
+
+  function renderRanking() {
+    elements.rankingList.replaceChildren();
+    if (preferences.rankings.length === 0) {
+      const empty = document.createElement("li");
+      empty.className = "ranking-empty";
+      empty.textContent = "아직 기록이 없습니다. 첫 작전을 시작하세요.";
+      elements.rankingList.append(empty);
+      return;
+    }
+    preferences.rankings.forEach((entry, index) => {
+      const item = document.createElement("li");
+      item.className = "ranking-entry";
+      const rank = document.createElement("span");
+      rank.className = "rank-number";
+      rank.textContent = index === 0 ? "★" : String(index + 1);
+      const pilot = document.createElement("div");
+      pilot.className = "ranking-pilot";
+      const name = document.createElement("strong");
+      name.textContent = entry.pilot;
+      const detail = document.createElement("small");
+      detail.textContent = `${DIFFICULTIES[entry.difficulty].label} · ${entry.result === "won" ? "성공" : "실패"} · ${entry.survived.toFixed(1)}초 · ${entry.dodged}개 회피`;
+      const points = document.createElement("strong");
+      points.className = "ranking-points";
+      points.textContent = `${entry.points.toLocaleString()} P`;
+      pilot.append(name, detail);
+      item.append(rank, pilot, points);
+      elements.rankingList.append(item);
+    });
   }
 
   function syncPreferences() {
@@ -83,6 +226,31 @@
       ? '<span aria-hidden="true">◼</span> 움직임 줄임'
       : '<span aria-hidden="true">✨</span> 움직임 기본';
     document.body.classList.toggle("reduce-motion", preferences.reducedMotion);
+    syncGameSetup();
+    renderRanking();
+  }
+
+  function calculatePoints(result) {
+    const survived = Math.min(GAME_DURATION, Math.max(0, GAME_DURATION - remaining));
+    const base = score * 120 + Math.floor(survived * 10) + (result === "won" ? 800 : 0);
+    return Math.round(base * getDifficulty().pointMultiplier);
+  }
+
+  function recordRanking(result) {
+    const points = calculatePoints(result);
+    if (preferences.activePilot === "게스트") return points;
+    preferences.rankings.push({
+      pilot: preferences.activePilot,
+      points,
+      survived: Math.min(GAME_DURATION, Math.max(0, GAME_DURATION - remaining)),
+      dodged: score,
+      difficulty: preferences.difficulty,
+      result,
+      playedAt: Date.now(),
+    });
+    preferences.rankings.sort((a, b) => b.points - a.points || b.survived - a.survived);
+    preferences.rankings = preferences.rankings.slice(0, RANKING_LIMIT);
+    return points;
   }
 
   function updateBoard() {
@@ -153,6 +321,7 @@
   }
 
   function spawnObstacle() {
+    const difficulty = getDifficulty();
     const size = 27 + Math.random() * 22;
     const element = document.createElement("div");
     element.className = "obstacle";
@@ -165,10 +334,10 @@
       x: Math.random() * maxX,
       y: -size,
       size,
-      speed: 215 + Math.random() * 115 + score * 1.2,
+      speed: difficulty.minSpeed + Math.random() * difficulty.speedVariance + score * 1.2,
       drift: (Math.random() - 0.5) * 28,
-      steering: 42 + Math.random() * 24,
-      maxDrift: 74 + Math.random() * 20,
+      steering: difficulty.steeringMin + Math.random() * difficulty.steeringVariance,
+      maxDrift: difficulty.maxDriftMin + Math.random() * difficulty.maxDriftVariance,
       rotation: Math.random() * 360,
     };
     obstacles.push(obstacle);
@@ -200,22 +369,22 @@
     elements.start.disabled = false;
     elements.start.textContent = "새 게임";
 
-    if (score > preferences.best) {
-      preferences.best = score;
-      savePreferences();
-      elements.best.textContent = String(preferences.best);
-    }
+    if (score > preferences.best) preferences.best = score;
+    const points = recordRanking(result);
+    savePreferences();
+    elements.best.textContent = String(preferences.best);
+    renderRanking();
 
     if (result === "won") {
       remaining = 0;
       setStatus("won", "성공");
       tone(740, 0.22, "triangle");
       window.setTimeout(() => tone(980, 0.28, "triangle"), 120);
-      showOverlay("MISSION COMPLETE", "생존 성공!", `운석 ${score}개를 피했습니다.`, "한 번 더");
+      showOverlay("MISSION COMPLETE", "생존 성공!", `운석 ${score}개 회피 · ${points.toLocaleString()} 포인트`, "한 번 더");
     } else {
       setStatus("lost", "실패");
       tone(135, 0.32, "sawtooth");
-      showOverlay("MISSION FAILED", "운석과 충돌!", `${(GAME_DURATION - remaining).toFixed(1)}초 생존 · 운석 ${score}개 회피`, "다시 도전");
+      showOverlay("MISSION FAILED", "운석과 충돌!", `${(GAME_DURATION - remaining).toFixed(1)}초 생존 · 운석 ${score}개 회피 · ${points.toLocaleString()} 포인트`, "다시 도전");
     }
     updateBoard();
   }
@@ -279,8 +448,9 @@
     spawnClock += delta;
 
     updatePlayer(delta);
-    if (spawnClock >= SPAWN_INTERVAL) {
-      spawnClock %= SPAWN_INTERVAL;
+    const spawnInterval = getDifficulty().spawnInterval;
+    if (spawnClock >= spawnInterval) {
+      spawnClock %= spawnInterval;
       spawnObstacle();
     }
     if (!updateObstacles(delta)) return;
@@ -345,6 +515,31 @@
     element.addEventListener("pointerleave", release);
   }
 
+  function handlePilotSubmit(event) {
+    event.preventDefault();
+    const pilot = normalizePilotName(elements.pilotInput.value);
+    if (!pilot || pilot === "게스트") {
+      elements.pilotSummary.textContent = "게스트가 아닌 파일럿 이름을 입력하세요.";
+      elements.pilotInput.focus();
+      return;
+    }
+    if (!preferences.pilots.includes(pilot)) preferences.pilots.push(pilot);
+    preferences.activePilot = pilot;
+    elements.pilotInput.value = "";
+    savePreferences();
+    syncGameSetup();
+    tone(620, 0.1, "triangle");
+  }
+
+  function handleDifficultyChange(event) {
+    const next = event.currentTarget.dataset.difficulty;
+    if (!DIFFICULTIES[next] || state === "running" || state === "paused") return;
+    preferences.difficulty = next;
+    savePreferences();
+    syncGameSetup();
+    tone(next === "easy" ? 420 : next === "hard" ? 720 : 560, 0.08, "triangle");
+  }
+
   elements.start.addEventListener("click", startGame);
   elements.overlayButton.addEventListener("click", () => {
     if (state === "paused") togglePause();
@@ -363,6 +558,10 @@
     savePreferences();
     syncPreferences();
   });
+  elements.pilotForm.addEventListener("submit", handlePilotSubmit);
+  for (const button of elements.difficultyButtons) {
+    button.addEventListener("click", handleDifficultyChange);
+  }
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", (event) => pressed.delete(event.code));
   window.addEventListener("blur", () => {
