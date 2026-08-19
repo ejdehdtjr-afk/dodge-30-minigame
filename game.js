@@ -491,14 +491,19 @@
   }
 
   function handleKeyDown(event) {
+    const isEscape = event.code === "Escape"
+      || event.key === "Escape"
+      || event.key === "Esc"
+      || event.keyCode === 27;
+    const isPauseKey = isEscape || event.code === "KeyP" || event.key?.toLowerCase() === "p";
     const gameKeys = ["ArrowLeft", "ArrowRight", "KeyA", "KeyD", "KeyP", "Escape", "Space"];
-    if (gameKeys.includes(event.code)) event.preventDefault();
+    if (gameKeys.includes(event.code) || isPauseKey) event.preventDefault();
     if (["ArrowLeft", "ArrowRight", "KeyA", "KeyD"].includes(event.code)) {
       pressed.add(event.code);
       if (!event.repeat) nudgePlayer(["ArrowLeft", "KeyA"].includes(event.code) ? -1 : 1);
     }
     if (event.repeat) return;
-    if (["KeyP", "Escape"].includes(event.code) && (state === "running" || state === "paused")) togglePause();
+    if (isPauseKey && (state === "running" || state === "paused")) togglePause();
     if (event.code === "Space" && ["ready", "won", "lost"].includes(state)) startGame();
   }
 
@@ -562,7 +567,7 @@
   for (const button of elements.difficultyButtons) {
     button.addEventListener("click", handleDifficultyChange);
   }
-  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keydown", handleKeyDown, { capture: true });
   window.addEventListener("keyup", (event) => pressed.delete(event.code));
   window.addEventListener("blur", () => {
     if (state === "running") {
